@@ -1,5 +1,0 @@
-[
-  { "id": 1, "title": "Global Top 50", "description": "The most played songs right now", "cover": "/placeholder.svg?key=global50" },
-  { "id": 2, "title": "Viral 50",      "description": "The most viral tracks",          "cover": "/placeholder.svg?key=viral50" }
-]
-
