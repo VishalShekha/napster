@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-  
-
+import profileRoutes from "./routes/profile.js";
+import userSongsRoutes from "./routes/user-songs.js";
 import friendsRoutes from "./routes/friends.js";
 import blendsRoutes from "./routes/blends.js";
 import sessionsRoutes from "./routes/sessions.js";
@@ -50,8 +50,8 @@ app.post("/login", (req, res) => {
 app.use("/api/friends", friendsRoutes);        // GET /api/friends
 app.use("/api", blendsRoutes);                 // GET /api/personal-blends, GET /api/common-blends, POST /api/blends
 app.use("/api/sessions", sessionsRoutes);
-
-
+app.use("/profile", profileRoutes);
+app.use("/user-songs", userSongsRoutes);
 // Server running
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
