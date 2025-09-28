@@ -6,6 +6,7 @@ import userSongsRoutes from "./routes/user-songs.js";
 import friendsRoutes from "./routes/friends.js";
 import blendsRoutes from "./routes/blends.js";
 import sessionsRoutes from "./routes/sessions.js";
+import authRoutes from "./routes/auth.js";
 dotenv.config();
 
 const app = express();
@@ -52,6 +53,7 @@ app.use("/api", blendsRoutes);                 // GET /api/personal-blends, GET 
 app.use("/api/sessions", sessionsRoutes);
 app.use("/profile", profileRoutes);
 app.use("/user-songs", userSongsRoutes);
+app.use("/auth", authRoutes);
 // Server running
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

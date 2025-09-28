@@ -1,13 +1,15 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation" // ✅ import router
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Music } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Music } from "lucide-react";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -17,36 +19,60 @@ export default function RegisterPage() {
     confirmPassword: "",
     dob: "",
     agree: false,
-  })
+  });
+  const [loading, setLoading] = useState(false);
 
-  const router = useRouter() // ✅ initialize router
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }))
-  }
+    }));
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     if (form.password !== form.confirmPassword) {
-      alert("Passwords do not match")
-      return
+      alert("Passwords do not match");
+      return;
     }
     if (!form.agree) {
-      alert("You must agree to the terms")
-      return
+      alert("You must agree to the terms");
+      return;
     }
 
-    console.log("Register form data:", form)
-    // 🔗 send data to API here
+    try {
+      setLoading(true);
 
-    // ✅ redirect after successful registration
-    router.push("/") // 👈 change this to "/profile" if you prefer
-  }
+      // 🔗 API call to register user
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          dob: form.dob,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Error ${res.status}`);
+      }
+
+      // ✅ success
+      alert("Registration successful!");
+      router.push("/"); // 👈 redirect (change to /profile if you want)
+    } catch (err: any) {
+      alert(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-background items-center justify-center p-6">
@@ -73,6 +99,7 @@ export default function RegisterPage() {
                 required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -85,6 +112,7 @@ export default function RegisterPage() {
                 required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
@@ -97,6 +125,7 @@ export default function RegisterPage() {
                 required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
@@ -109,6 +138,7 @@ export default function RegisterPage() {
                 required
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="dob">Date of Birth</Label>
               <Input
@@ -124,7 +154,6 @@ export default function RegisterPage() {
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="agree"
-                name="agree"
                 checked={form.agree}
                 onCheckedChange={(checked) =>
                   setForm((prev) => ({ ...prev, agree: checked as boolean }))
@@ -145,8 +174,9 @@ export default function RegisterPage() {
             <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90 rounded-full"
+              disabled={loading}
             >
-              Sign Up
+              {loading ? "Signing Up..." : "Sign Up"}
             </Button>
 
             <p className="text-sm text-center text-muted-foreground">
@@ -159,5 +189,5 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
