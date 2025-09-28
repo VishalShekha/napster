@@ -32,6 +32,8 @@ app.use("/api", blendsRoutes);
 app.use("/api/genres", genresRoutes);
 app.use("/api/top-charts", topChartsRoutes);
 app.use("/api/mood-playlists", moodPlaylistsRoutes);
+app.use("/api/sessions", sessionsRoutes);
+
 
 
 // Server running
