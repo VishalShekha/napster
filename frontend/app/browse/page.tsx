@@ -49,9 +49,10 @@ export default function Browse() {
   async function fetchData() {
     setLoading(true);
     const [fGenres, fTopCharts, fMoodPlaylists] = await Promise.all([
-      safeFetch<Genre>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/genres`),
-      safeFetch<Chart>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/top-charts`),
-      safeFetch<Playlist>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/mood-playlists`)
+      safeFetch<Genre>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/genres`),
+      safeFetch<Chart>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/top-charts`),
+      safeFetch<Playlist>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/mood-playlists`)
+
     ]);
     setGenres(fGenres);
     setTopCharts(fTopCharts);
