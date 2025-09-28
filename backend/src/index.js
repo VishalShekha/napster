@@ -7,6 +7,7 @@ import friendsRoutes from "./routes/friends.js";
 import blendsRoutes from "./routes/blends.js";
 import sessionsRoutes from "./routes/sessions.js";
 import authRoutes from "./routes/auth.js";
+import searchRoutes from "./routes/search.js";
 dotenv.config();
 
 const app = express();
@@ -54,6 +55,7 @@ app.use("/api/sessions", sessionsRoutes);
 app.use("/profile", profileRoutes);
 app.use("/user-songs", userSongsRoutes);
 app.use("/auth", authRoutes);
+app.use("/search", searchRoutes);
 // Server running
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
