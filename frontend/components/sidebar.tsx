@@ -7,13 +7,14 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { CreatePlaylistDialog } from "@/components/create-playlist-dialog"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useState } from "react"
 
 export function Sidebar() {
-  const pathname = usePathname()
   const [groupMode, setGroupMode] = useState(false)
-
+const router = useRouter()
+const pathname = usePathname()
+const isGroupMode = pathname.startsWith("/groupmode")
   const playlists = [
     { name: "Liked Songs", id: "liked" },
     { name: "My Playlist #1", id: "1" },
@@ -58,9 +59,19 @@ export function Sidebar() {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-sm text-sidebar-foreground">Group Mode</span>
-          <Switch checked={groupMode} onCheckedChange={setGroupMode} className="data-[state=checked]:bg-primary" />
-        </div>
+    <span className="text-sm text-sidebar-foreground">Group Mode</span>
+    <Switch
+      checked={isGroupMode}
+      onCheckedChange={(checked) => {
+        if (checked) {
+          router.push("/groupmode")
+        } else {
+          router.push("/") // or "/home" if that’s your normal homepage
+        }
+      }}
+      className="data-[state=checked]:bg-primary"
+    />
+  </div>
       </div>
 
       {/* Main Navigation */}
