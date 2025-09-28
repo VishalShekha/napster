@@ -3,6 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
   
 
+import friendsRoutes from "./routes/friends.js";
+import blendsRoutes from "./routes/blends.js";
+import sessionsRoutes from "./routes/sessions.js";
 dotenv.config();
 
 const app = express();
@@ -43,6 +46,11 @@ app.get("/devTest", (req, res) => {
 app.post("/login", (req, res) => {
   res.json({ token: "your-token-value" });
 });
+
+app.use("/api/friends", friendsRoutes);        // GET /api/friends
+app.use("/api", blendsRoutes);                 // GET /api/personal-blends, GET /api/common-blends, POST /api/blends
+app.use("/api/sessions", sessionsRoutes);
+
 
 // Server running
 app.listen(port, () => {

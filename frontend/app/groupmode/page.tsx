@@ -33,34 +33,54 @@ type Session = {
 }
 
 export default function GroupModePage() {
-  const [friends, setFriends] = useState<Friend[]>([])
-  const [personalBlends, setPersonalBlends] = useState<Blend[]>([])
-  const [commonBlends, setCommonBlends] = useState<Blend[]>([])
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [selectedFriends, setSelectedFriends] = useState<string[]>([])
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [personalBlends, setPersonalBlends] = useState<Blend[]>([]);
+  const [commonBlends, setCommonBlends] = useState<Blend[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function safeFetch<T>(url: string): Promise<T[]> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return []; // fallback empty array
+  }
+}
+
 
   useEffect(() => {
-    // ⏳ Replace with backend fetch later
-    setFriends([
-      { id: "1", name: "Alice", status: "Listening to Midnight Echoes", avatar: "/friend1.jpg" },
-      { id: "2", name: "Bob", status: "Online • Browsing music", avatar: "/friend2.jpg" },
-      { id: "3", name: "Charlie", status: "Offline", avatar: "/friend3.jpg" },
-    ])
+  async function fetchData() {
+    setLoading(true);
 
-    setPersonalBlends([
-      { id: "1", name: "Alice Mix", members: ["Alice"], cover: "/blend1.jpg" },
-    ])
+    const [fFriends, fPersonalBlends, fCommonBlends, fSessions] =
+      await Promise.all([
+        safeFetch<Friend>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/friends`),
+        safeFetch<Blend>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/personal-blends`),
+        safeFetch<Blend>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/common-blends`),
+        safeFetch<Session>(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/sessions`),
+      ]);
 
-    setCommonBlends([
-      { id: "2", name: "Workout Beats", members: ["You", "Bob"], cover: "/blend2.jpg" },
-      { id: "3", name: "Chill Nights", members: ["You", "Alice", "Charlie"], cover: "/blend3.jpg" },
-    ])
+    setFriends(fFriends);
+    setPersonalBlends(fPersonalBlends);
+    setCommonBlends(fCommonBlends);
+    setSessions(fSessions);
 
-    setSessions([
-      { id: "1", name: "Late Night Jam", host: "Alice", participants: 4 },
-      { id: "2", name: "Coding Mix", host: "Bob", participants: 2 },
-    ])
-  }, [])
+    setLoading(false);
+  }
+
+  fetchData();
+}, []);
+if (loading) {
+  return (
+    <div className="p-6">
+      <p>Loading...</p>
+    </div>
+  );
+}
 
   const toggleFriendSelection = (id: string) => {
     setSelectedFriends((prev) =>
@@ -68,23 +88,28 @@ export default function GroupModePage() {
     )
   }
 
-  const handleCreateBlend = () => {
-    if (selectedFriends.length === 0) {
-      alert("Select at least one friend to create a blend")
-      return
-    }
-
-    const newBlend: Blend = {
-      id: String(Date.now()),
-      name: `Blend with ${selectedFriends.length} friends`,
-      members: selectedFriends,
-      cover: "/placeholder.svg",
-    }
-
-    setCommonBlends((prev) => [...prev, newBlend])
-    setSelectedFriends([])
-    // ⏳ Later: POST /api/blends {members: selectedFriends}
+  const handleCreateBlend = async () => {
+  if (selectedFriends.length === 0) {
+    alert("Select at least one friend to create a blend");
+    return;
   }
+
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blends`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ members: selectedFriends }),
+    });
+    const newBlend: Blend = await res.json();
+
+    setCommonBlends((prev) => [...prev, newBlend]);
+    setSelectedFriends([]);
+  } catch (err) {
+    console.error("Failed to create blend:", err);
+    alert("Failed to create blend. Try again.");
+  }
+};
+
 
   return (
     <div className="flex h-screen bg-background">
