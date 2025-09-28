@@ -15,6 +15,7 @@ type Friend = {
   name: string
   status: string
   avatar?: string
+  hidden?: boolean
 }
 
 type Blend = {

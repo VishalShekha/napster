@@ -1,0 +1,4 @@
+[
+  { "id": 1, "title": "Chill Vibes",   "description": "Relax and unwind", "cover": "/placeholder.svg?key=chill" },
+  { "id": 2, "title": "Workout Energy","description": "High energy tracks","cover": "/placeholder.svg?key=workout" }
+]

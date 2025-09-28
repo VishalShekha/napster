@@ -1,36 +1,76 @@
+"use client";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Play } from "lucide-react"
 
+interface Genre {
+  id: number;
+  name: string;
+  color: string;
+  cover: string;
+}
+
+interface Chart {
+  id: number;
+  title: string;
+  description: string;
+  cover: string;
+}
+
+interface Playlist {
+  id: number;
+  title: string;
+  description: string;
+  cover: string;
+}
+
+
 export default function Browse() {
-  const genres = [
-    { name: "Pop", color: "bg-pink-500", cover: "/placeholder.svg?key=pop1" },
-    { name: "Hip-Hop", color: "bg-orange-500", cover: "/placeholder.svg?key=hiphop1" },
-    { name: "Rock", color: "bg-red-500", cover: "/placeholder.svg?key=rock1" },
-    { name: "Electronic", color: "bg-purple-500", cover: "/placeholder.svg?key=electronic1" },
-    { name: "Jazz", color: "bg-blue-500", cover: "/placeholder.svg?key=jazz1" },
-    { name: "Classical", color: "bg-green-500", cover: "/placeholder.svg?key=classical1" },
-    { name: "R&B", color: "bg-yellow-500", cover: "/placeholder.svg?key=rnb1" },
-    { name: "Country", color: "bg-amber-600", cover: "/placeholder.svg?key=country1" },
-    { name: "Indie", color: "bg-teal-500", cover: "/placeholder.svg?key=indie1" },
-    { name: "Alternative", color: "bg-indigo-500", cover: "/placeholder.svg?key=alt1" },
-  ]
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [topCharts, setTopCharts] = useState<Chart[]>([]);
+  const [moodPlaylists, setMoodPlaylists] = useState<Playlist[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const topCharts = [
-    { title: "Global Top 50", description: "The most played songs right now", cover: "/placeholder.svg?key=global50" },
-    { title: "Viral 50", description: "The most viral tracks", cover: "/placeholder.svg?key=viral50" },
-    { title: "Top Hits 2024", description: "The biggest hits of the year", cover: "/placeholder.svg?key=tophits" },
-    { title: "New Music Friday", description: "Fresh tracks for your weekend", cover: "/placeholder.svg?key=newmusic" },
-  ]
+  
 
-  const moodPlaylists = [
-    { title: "Chill Vibes", description: "Relax and unwind", cover: "/placeholder.svg?key=chill" },
-    { title: "Workout Energy", description: "High energy tracks", cover: "/placeholder.svg?key=workout" },
-    { title: "Focus Flow", description: "Music for concentration", cover: "/placeholder.svg?key=focus" },
-    { title: "Party Mix", description: "Get the party started", cover: "/placeholder.svg?key=party" },
-    { title: "Sleep Sounds", description: "Peaceful tracks for rest", cover: "/placeholder.svg?key=sleep" },
-    { title: "Road Trip", description: "Perfect driving companions", cover: "/placeholder.svg?key=roadtrip" },
-  ]
+  async function safeFetch<T>(url: string): Promise<T[]> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error(err);
+    return []; // fallback empty array
+  }
+}
+
+  useEffect(() => {
+  async function fetchData() {
+    setLoading(true);
+    const [fGenres, fTopCharts, fMoodPlaylists] = await Promise.all([
+      safeFetch<Genre>(`${process.env.NEXT_PUBLIC_BASE_URL}/api/genres`),
+      safeFetch<Chart>(`${process.env.NEXT_PUBLIC_BASE_URL}/api/top-charts`),
+      safeFetch<Playlist>(`${process.env.NEXT_PUBLIC_BASE_URL}/api/mood-playlists`)
+    ]);
+    setGenres(fGenres);
+    setTopCharts(fTopCharts);
+    setMoodPlaylists(fMoodPlaylists);
+    setLoading(false);
+  }
+  fetchData();
+}, []);
+  if (loading) {
+  return (
+    <div className="p-6">
+      <p>Loading...</p>
+    </div>
+  );
+}
+
+
+
+  
 
   return (
     <div className="p-6">
@@ -44,10 +84,8 @@ export default function Browse() {
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-foreground mb-4">Browse by genre</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {genres.map((genre, index) => (
-            <Card
-              key={index}
-              className={`${genre.color} hover:scale-105 transition-transform cursor-pointer relative overflow-hidden`}
+          {genres.map((genre: Genre) => (
+          <Card key={genre.id} className={`${genre.color} hover:scale-105 transition-transform cursor-pointer relative overflow-hidden`}
             >
               <CardContent className="p-4 h-32 flex flex-col justify-between">
                 <h3 className="text-white font-bold text-lg">{genre.name}</h3>
@@ -68,8 +106,8 @@ export default function Browse() {
       <section className="mb-8">
         <h2 className="text-xl font-semibold text-foreground mb-4">Top charts</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {topCharts.map((chart, index) => (
-            <Card key={index} className="bg-card hover:bg-accent/50 transition-colors cursor-pointer group">
+          {topCharts.map((chart: Chart) => (
+          <Card key={chart.id} className="bg-card hover:bg-accent/50 transition-colors cursor-pointer group">
               <CardContent className="p-4">
                 <div className="relative mb-4">
                   <img
@@ -98,8 +136,8 @@ export default function Browse() {
       <section>
         <h2 className="text-xl font-semibold text-foreground mb-4">Mood & activity</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {moodPlaylists.map((playlist, index) => (
-            <Card key={index} className="bg-card hover:bg-accent/50 transition-colors cursor-pointer group">
+          {moodPlaylists.map((playlist: Playlist) => (
+          <Card key={playlist.id} className="bg-card hover:bg-accent/50 transition-colors cursor-pointer group">
               <CardContent className="flex items-center gap-4 p-4">
                 <img
                   src={playlist.cover || "/placeholder.svg"}
