@@ -3,7 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import profileRoutes from "./routes/profile.js";
 import userSongsRoutes from "./routes/user-songs.js";
-  
+import notificationsRoutes from "./routes/notifications.js";
 import genresRoutes from "./routes/genres.js";
 import topChartsRoutes from "./routes/topCharts.js";
 import moodPlaylistsRoutes from "./routes/moodPlaylists.js";
@@ -12,6 +12,7 @@ import blendsRoutes from "./routes/blends.js";
 import sessionsRoutes from "./routes/sessions.js";
 import authRoutes from "./routes/auth.js";
 import searchRoutes from "./routes/search.js";
+import playlistRoutes from "./routes/playlists.js"
 dotenv.config();
 
 const app = express();
@@ -43,8 +44,8 @@ app.use("/api/genres", genresRoutes);
 app.use("/api/top-charts", topChartsRoutes);
 app.use("/api/mood-playlists", moodPlaylistsRoutes);
 app.use("/api/sessions", sessionsRoutes);
-
-
+app.use("/api/notifications", notificationsRoutes);
+app.use("/playlists", playlistRoutes)
 
 // Server running
 app.listen(port, () => {

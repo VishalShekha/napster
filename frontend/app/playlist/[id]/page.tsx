@@ -1,96 +1,59 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Play, Pause, Heart, MoreHorizontal, Clock, Download, Share } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
-interface PlaylistPageProps {
-  params: {
-    id: string
-  }
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000"
+
+interface Song {
+  id: number
+  title: string
+  artist: string
+  album: string
+  duration: string
+  cover?: string
 }
 
-export default function PlaylistPage({ params }: PlaylistPageProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [likedSongs, setLikedSongs] = useState<Set<number>>(new Set([1, 3, 5]))
+interface Playlist {
+  id: string
+  name: string
+  description: string
+  cover: string
+  owner: string
+  followers: number
+  totalDuration: string
+  songs: Song[]
+}
 
-  // Mock playlist data
-  const playlist = {
-    id: params.id,
-    name: "My Playlist #1",
-    description: "A collection of my favorite tracks",
-    cover: "/placeholder.svg?key=playlist1",
-    owner: "You",
-    followers: 1247,
-    totalDuration: "2 hr 34 min",
-    songs: [
-      {
-        id: 1,
-        title: "Shattered Reality",
-        artist: "Supersonic",
-        album: "Digital Dreams",
-        duration: "3:42",
-        cover: "/album-cover-shattered-reality.jpg",
-      },
-      {
-        id: 2,
-        title: "Ocean Waves",
-        artist: "Calm Sounds",
-        album: "Nature's Symphony",
-        duration: "4:15",
-        cover: "/album-cover-ocean-waves.png",
-      },
-      {
-        id: 3,
-        title: "City Lights",
-        artist: "Urban Beat",
-        album: "Metropolitan",
-        duration: "3:28",
-        cover: "/album-cover-city-lights.jpg",
-      },
-      {
-        id: 4,
-        title: "Mountain High",
-        artist: "Folk Tales",
-        album: "Wilderness",
-        duration: "5:02",
-        cover: "/album-cover-mountain-high.png",
-      },
-      {
-        id: 5,
-        title: "Electric Pulse",
-        artist: "Neon Waves",
-        album: "Synthwave",
-        duration: "3:55",
-        cover: "/album-cover-electric-pulse.jpg",
-      },
-      {
-        id: 6,
-        title: "Midnight Dreams",
-        artist: "Luna Eclipse",
-        album: "Nocturnal",
-        duration: "4:33",
-        cover: "/midnight-dreams-album-cover.png",
-      },
-      {
-        id: 7,
-        title: "Bass Drop",
-        artist: "Digital Storm",
-        album: "Electronic Fury",
-        duration: "3:18",
-        cover: "/album-cover-bass-drop.jpg",
-      },
-      {
-        id: 8,
-        title: "Jazz Nights",
-        artist: "Smooth Collective",
-        album: "After Hours",
-        duration: "6:12",
-        cover: "/album-cover-jazz-nights.jpg",
-      },
-    ],
-  }
+export default function PlaylistPage() {
+  const { id } = useParams() as { id: string }
+  const [playlist, setPlaylist] = useState<Playlist | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [likedSongs, setLikedSongs] = useState<Set<number>>(new Set())
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch playlist data from backend
+  useEffect(() => {
+    async function fetchPlaylist() {
+      try {
+        setLoading(true)
+        setError(null)
+        const res = await fetch(`${API_BASE}/playlists/${id}`)
+        if (!res.ok) throw new Error(`Error ${res.status}`)
+        const data = await res.json()
+        setPlaylist(data)
+      } catch (err: any) {
+        setError(err.message || "Failed to load playlist")
+      } finally {
+        setLoading(false)
+      }
+    }
+    if (id) fetchPlaylist()
+  }, [id])
 
   const toggleLike = (songId: number) => {
     const newLikedSongs = new Set(likedSongs)
@@ -100,10 +63,16 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
       newLikedSongs.add(songId)
     }
     setLikedSongs(newLikedSongs)
+    // 👉 optionally send like/unlike request to backend here
+    // fetch(`${API_BASE}/songs/${songId}/like`, { method: "POST" })
   }
 
+  if (loading) return <p className="p-6 text-muted-foreground">Loading...</p>
+  if (error) return <p className="p-6 text-red-500">{error}</p>
+  if (!playlist) return <p className="p-6 text-muted-foreground">Playlist not found</p>
+
   return (
-    <div className="p-6">
+    <div className="p-6 bg-gradient-to-b from-purple-700 via-purple-900 to-black text-white min-h-screen">
       {/* Playlist Header */}
       <div className="flex items-end gap-6 mb-8">
         <img
@@ -115,10 +84,10 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
           <Badge variant="secondary" className="mb-2">
             Playlist
           </Badge>
-          <h1 className="text-5xl font-bold text-foreground mb-4">{playlist.name}</h1>
-          <p className="text-muted-foreground mb-4">{playlist.description}</p>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{playlist.owner}</span>
+          <h1 className="text-5xl font-bold mb-4">{playlist.name}</h1>
+          <p className="text-gray-300 mb-4">{playlist.description}</p>
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <span className="font-medium text-white">{playlist.owner}</span>
             <span>•</span>
             <span>{playlist.followers.toLocaleString()} followers</span>
             <span>•</span>
@@ -133,29 +102,29 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
       <div className="flex items-center gap-4 mb-8">
         <Button
           size="lg"
-          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-14 h-14"
+          className="bg-green-500 hover:bg-green-600 text-white rounded-full w-14 h-14"
           onClick={() => setIsPlaying(!isPlaying)}
         >
           {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
         </Button>
-        <Button variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="lg" className="text-gray-300 hover:text-white">
           <Heart className="h-6 w-6" />
         </Button>
-        <Button variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="lg" className="text-gray-300 hover:text-white">
           <Download className="h-6 w-6" />
         </Button>
-        <Button variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="lg" className="text-gray-300 hover:text-white">
           <Share className="h-6 w-6" />
         </Button>
-        <Button variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground">
+        <Button variant="ghost" size="lg" className="text-gray-300 hover:text-white">
           <MoreHorizontal className="h-6 w-6" />
         </Button>
       </div>
 
       {/* Songs List */}
-      <div className="space-y-2">
+      <div className="space-y-2 bg-black/40 rounded-lg p-2">
         {/* Header */}
-        <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm text-muted-foreground border-b border-border">
+        <div className="grid grid-cols-12 gap-4 px-4 py-2 text-sm text-gray-400 border-b border-gray-700">
           <div className="col-span-1">#</div>
           <div className="col-span-5">Title</div>
           <div className="col-span-3">Album</div>
@@ -169,10 +138,10 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
         {playlist.songs.map((song, index) => (
           <div
             key={song.id}
-            className="grid grid-cols-12 gap-4 px-4 py-2 rounded-md hover:bg-accent/50 group cursor-pointer"
+            className="grid grid-cols-12 gap-4 px-4 py-2 rounded-md hover:bg-purple-800/40 group cursor-pointer"
           >
             <div className="col-span-1 flex items-center">
-              <span className="text-muted-foreground group-hover:hidden">{index + 1}</span>
+              <span className="text-gray-400 group-hover:hidden">{index + 1}</span>
               <Button size="sm" variant="ghost" className="hidden group-hover:flex w-8 h-8 p-0">
                 <Play className="h-4 w-4" />
               </Button>
@@ -180,15 +149,15 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
             <div className="col-span-5 flex items-center gap-3">
               <img src={song.cover || "/placeholder.svg"} alt={song.title} className="w-10 h-10 rounded object-cover" />
               <div>
-                <p className="font-medium text-foreground">{song.title}</p>
-                <p className="text-sm text-muted-foreground">{song.artist}</p>
+                <p className="font-medium text-white">{song.title}</p>
+                <p className="text-sm text-gray-400">{song.artist}</p>
               </div>
             </div>
             <div className="col-span-3 flex items-center">
-              <p className="text-sm text-muted-foreground">{song.album}</p>
+              <p className="text-sm text-gray-400">{song.album}</p>
             </div>
             <div className="col-span-2 flex items-center">
-              <p className="text-sm text-muted-foreground">3 days ago</p>
+              <p className="text-sm text-gray-400">3 days ago</p>
             </div>
             <div className="col-span-1 flex items-center justify-end gap-2">
               <Button
@@ -199,11 +168,11 @@ export default function PlaylistPage({ params }: PlaylistPageProps) {
               >
                 <Heart
                   className={`h-4 w-4 ${
-                    likedSongs.has(song.id) ? "fill-primary text-primary" : "text-muted-foreground"
+                    likedSongs.has(song.id) ? "fill-red-500 text-red-500" : "text-gray-400"
                   }`}
                 />
               </Button>
-              <span className="text-sm text-muted-foreground">{song.duration}</span>
+              <span className="text-sm text-gray-400">{song.duration}</span>
               <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 w-8 h-8 p-0">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
