@@ -9,7 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Music } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
+  throw new Error("NEXT_PUBLIC_BACKEND_URL is not defined in your .env file");
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
