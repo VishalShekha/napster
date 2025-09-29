@@ -13,6 +13,8 @@ import sessionsRoutes from "./routes/sessions.js";
 import authRoutes from "./routes/auth.js";
 import searchRoutes from "./routes/search.js";
 import playlistRoutes from "./routes/playlists.js"
+import usersRoutes from "./routes/users.js";
+
 dotenv.config();
 
 const app = express();
@@ -46,6 +48,8 @@ app.use("/api/mood-playlists", moodPlaylistsRoutes);
 app.use("/api/sessions", sessionsRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/playlists", playlistRoutes)
+app.use("/users", usersRoutes);
+
 
 // Server running
 app.listen(port, () => {
