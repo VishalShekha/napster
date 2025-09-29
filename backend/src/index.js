@@ -31,9 +31,8 @@ app.post("/login", (req, res) => {
   res.json({ token: "your-token-value" });
 });
 
-app.use("/api/friends", friendsRoutes);        // GET /api/friends
-app.use("/api", blendsRoutes);                 // GET /api/personal-blends, GET /api/common-blends, POST /api/blends
-app.use("/api/sessions", sessionsRoutes);
+
+
 app.use("/profile", profileRoutes);
 app.use("/user-songs", userSongsRoutes);
 app.use("/auth", authRoutes);
