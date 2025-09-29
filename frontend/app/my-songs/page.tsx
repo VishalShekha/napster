@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Edit, Trash2, Eye } from "lucide-react";
-
+import { useRouter } from "next/navigation";
 /* ---- TypeScript interface ---- */
 interface Song {
   id: number | string;
@@ -26,7 +26,7 @@ export default function MySongsPage() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
+const router = useRouter();
   async function fetchSongs() {
     setLoading(true);
     setError(null);
@@ -74,7 +74,12 @@ export default function MySongsPage() {
               <h1 className="text-3xl font-bold text-foreground mb-2">Your Songs</h1>
               <p className="text-muted-foreground">Manage and track your music uploads</p>
             </div>
-            <Button className="bg-primary hover:bg-primary/90 rounded-full">Upload New Song</Button>
+            <Button
+              className="bg-primary hover:bg-primary/90 rounded-full"
+              onClick={() => router.push("/upload")}
+            >
+              Upload New Song
+            </Button>
           </div>
 
           {/* Loading / Error */}
