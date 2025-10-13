@@ -5,8 +5,14 @@ import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Play, Pause, Heart, MoreHorizontal, Clock, Download, Share } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { formatDistanceToNow, parseISO } from 'date-fns'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000"
+if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
+  throw new Error("NEXT_PUBLIC_BACKEND_URL is not defined in your .env file")
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL
+
 
 interface Song {
   id: number
@@ -15,6 +21,7 @@ interface Song {
   album: string
   duration: string
   cover?: string
+  dateAdded: string
 }
 
 interface Playlist {
@@ -157,7 +164,9 @@ export default function PlaylistPage() {
               <p className="text-sm text-gray-400">{song.album}</p>
             </div>
             <div className="col-span-2 flex items-center">
-              <p className="text-sm text-gray-400">3 days ago</p>
+              <p className="text-sm text-gray-400">
+                {formatDistanceToNow(parseISO(song.dateAdded), { addSuffix: true })}
+              </p>
             </div>
             <div className="col-span-1 flex items-center justify-end gap-2">
               <Button

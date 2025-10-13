@@ -20,12 +20,43 @@ interface Song {
   cover?: string;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+interface UserProfile {
+  name: string;
+  avatarUrl?: string;
+  initials: string;
+  role: string; // e.g., "Artist"
+}
+
+
+
+if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
+  throw new Error("NEXT_PUBLIC_BACKEND_URL is not defined in your .env file");
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 
 export default function ProfilePage() {
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+useEffect(() => {
+  async function fetchProfile() {
+    try {
+      const res = await fetch(`${API_BASE}/users/me`);
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const data: UserProfile = await res.json();
+      setProfile(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+  fetchProfile();
+}, []);
+
 
   useEffect(() => {
     async function fetchSongs() {
@@ -56,16 +87,16 @@ export default function ProfilePage() {
           {/* Profile Header */}
           <div className="flex items-start gap-8 mb-8">
             <Avatar className="w-32 h-32">
-              <AvatarImage src="/music-artist-profile.jpg" />
-              <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-chart-2 text-primary-foreground">
-                JD
-              </AvatarFallback>
-            </Avatar>
+            <AvatarImage src={profile?.avatarUrl || "/placeholder.svg"} />
+            <AvatarFallback>{profile?.initials || "NA"}</AvatarFallback>
+          </Avatar>
+
             <div className="flex-1">
-              <Badge variant="secondary" className="mb-2">
-                Artist
-              </Badge>
-              <h1 className="text-4xl font-bold text-foreground mb-2">John Doe</h1>
+              <Badge variant="secondary">{profile?.role || "User"}</Badge>
+              <h1 className="text-4xl font-bold text-foreground mb-2">
+                {profile?.name || "Unnamed"}
+              </h1>
+
               {loading ? (
                 <p className="text-muted-foreground mb-4">Loading songs...</p>
               ) : error ? (

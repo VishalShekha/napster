@@ -11,6 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Upload, Music, ImageIcon } from "lucide-react"
 
+if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
+  throw new Error("NEXT_PUBLIC_BACKEND_URL is not defined in your .env file");
+}
+
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+
 export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false)
   const [audioFile, setAudioFile] = useState<File | null>(null)
@@ -68,7 +75,9 @@ export default function UploadPage() {
       formData.append("genre", genre)
       formData.append("description", description)
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/api/upload`, {
+
+
+      const res = await fetch(`${API_BASE}/api/upload`, {
         method: "POST",
         body: formData,
       })
