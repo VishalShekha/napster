@@ -66,7 +66,7 @@ const isGroupMode = pathname.startsWith("/groupmode")
         if (checked) {
           router.push("/groupmode")
         } else {
-          router.push("/") // or "/home" if that’s your normal homepage
+          router.push("/home") // or "/home" if that’s your normal homepage
         }
       }}
       className="data-[state=checked]:bg-primary"
@@ -77,7 +77,7 @@ const isGroupMode = pathname.startsWith("/groupmode")
       {/* Main Navigation */}
       <div className="px-4 py-3">
         <div className="space-y-2">
-          <Link href="/">
+          <Link href="/home">
             <Button
               variant="ghost"
               className={`w-full justify-start gap-3 text-sidebar-foreground hover:bg-sidebar-accent rounded-xl h-11 ${
