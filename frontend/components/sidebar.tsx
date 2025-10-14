@@ -34,7 +34,7 @@ const isGroupMode = pathname.startsWith("/groupmode")
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-chart-2 rounded-lg flex items-center justify-center">
               <Music className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-sidebar-foreground">SoundWave</span>
+            <span className="text-xl font-bold text-sidebar-foreground"></span>
           </Link>
           <div className="flex items-center gap-2">
             <Link href="/notifications">
