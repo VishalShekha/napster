@@ -29,11 +29,27 @@ export default function UploadPage() {
   const [description, setDescription] = useState("")
   const [status, setStatus] = useState<"idle" | "uploading" | "success" | "error">("idle")
 
+  const [ratings, setRatings] = useState({
+    happy: 0,
+    sad: 0,
+    party: 0,
+    rock: 0,
+    classic: 0,
+    instrumental: 0,
+  });
+
+
   const handleAudioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setAudioFile(e.target.files[0])
     }
   }
+  const handleRatingChange = (category: string, value: number) => {
+    setRatings((prev) => ({ ...prev, [category]: value }));
+  };
+
+
+
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -74,6 +90,9 @@ export default function UploadPage() {
       formData.append("album", album)
       formData.append("genre", genre)
       formData.append("description", description)
+      formData.append("ratings", JSON.stringify(ratings));
+
+
 
 
 
@@ -193,6 +212,44 @@ export default function UploadPage() {
                 <Label htmlFor="description">Description</Label>
                 <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Tell us about your song..." className="min-h-[100px]" />
               </div>
+              <div className="space-y-4 mt-4">
+              <Label className="text-lg font-semibold">Rate Your Song (0-5)</Label>
+              {["happy", "sad", "party", "rock", "classic", "instrumental"].map((cat) => (
+                <div key={cat} className="flex items-center gap-2">
+                  <span className="capitalize w-32">{cat}</span>
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3, 4, 5].map((val) => {
+                      const inputId = `${cat}-${val}`
+                      return (
+                        <div key={val} className="flex flex-col items-center text-sm">
+                          <input
+                            type="radio"
+                            id={inputId}
+                            name={cat}
+                            value={val}
+                            checked={ratings[cat as keyof typeof ratings] === val}
+                            onChange={() => handleRatingChange(cat, val)}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor={inputId}
+                            className={`w-6 h-6 flex items-center justify-center rounded-full border cursor-pointer ${
+                              ratings[cat as keyof typeof ratings] === val
+                                ? "bg-primary text-white border-primary"
+                                : "bg-background border-muted-foreground"
+                            }`}
+                          >
+                            {val}
+                          </label>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+
 
               <div className="flex items-center justify-between pt-6">
                 <Button variant="outline" className="rounded-full bg-transparent">
