@@ -47,13 +47,14 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      // ✅ You can save JWT token or handle session as per backend
       if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
+
 
       alert("Login successful!");
-      router.push("/"); // 👈 redirect to homepage or profile
+      router.push("/home"); // 👈 redirect to homepage or profile
 
     } catch (err: any) {
       alert(err.message || "Login failed");
