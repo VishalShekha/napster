@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Music } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4000";
+const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
 export default function LoginPage() {
   const [form, setForm] = useState({
@@ -49,11 +49,9 @@ export default function LoginPage() {
 
       if (data.token) {
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("email", JSON.stringify(data.user.email));
     }
 
-
-      alert("Login successful!");
       router.push("/home"); // 👈 redirect to homepage or profile
 
     } catch (err: any) {

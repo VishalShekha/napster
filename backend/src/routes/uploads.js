@@ -1,42 +1,102 @@
-import express from "express"
-import multer from "multer"
+import express from "express";
+import dotenv from "dotenv";
+import multer from "multer";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { dyDB_client } from "../middleware/dynamo_config.js";
+import { s3_client } from "../middleware/s3_config.js";
 
-const router = express.Router()
+dotenv.config();
+const router = express.Router();
 
-// Configure multer for file uploads (audio + image)
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/") // save in /uploads folder
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname)
-  },
-})
+// AWS clients
+const ddb = DynamoDBDocumentClient.from(dyDB_client);
 
-const upload = multer({ storage })
+const SONGS_TABLE = "Songs-Napster-DB";
+const S3_BUCKET = "napster-bucket-123456"; // replace with your actual bucket name
 
-// POST /uploads/song
+// Configure multer to store files in memory
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Helper: generate simple unique ID
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+
+// ========================== UPLOAD SONG ==========================
 router.post(
-  "/song",
-  upload.fields([{ name: "audio", maxCount: 1 }, { name: "cover", maxCount: 1 }]),
-  (req, res) => {
-    const { title, artist, album, genre, description } = req.body
-    const audioFile = req.files["audio"] ? req.files["audio"][0] : null
-    const coverFile = req.files["cover"] ? req.files["cover"][0] : null
+  "/",
+  upload.fields([
+    { name: "audio", maxCount: 1 },
+    { name: "coverArt", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { email, title, artist, album, genre, description, ratings } = req.body;
+      const audioFile = req.files["audio"] ? req.files["audio"][0] : null;
+      const coverFile = req.files["coverArt"] ? req.files["coverArt"][0] : null;
 
-    res.json({
-      message: "Song uploaded successfully",
-      data: {
+      if (!audioFile || !coverFile) {
+        return res
+          .status(400)
+          .json({ message: "Audio and cover art files are required" });
+      }
+
+      // Generate unique S3 keys
+      const audioKey = `audio/${generateId()}-${audioFile.originalname}`;
+      const coverKey = `cover/${generateId()}-${coverFile.originalname}`;
+
+      // Upload audio to S3
+      await s3_client.send(
+        new PutObjectCommand({
+          Bucket: S3_BUCKET,
+          Key: audioKey,
+          Body: audioFile.buffer,
+          ContentType: audioFile.mimetype,
+        })
+      );
+
+      // Upload cover art to S3
+      await s3_client.send(
+        new PutObjectCommand({
+          Bucket: S3_BUCKET,
+          Key: coverKey,
+          Body: coverFile.buffer,
+          ContentType: coverFile.mimetype,
+        })
+      );
+
+      // Prepare metadata for DynamoDB
+      const songItem = {
+        email,
+        id: generateId(),
         title,
         artist,
         album,
         genre,
         description,
-        audioPath: audioFile?.path,
-        coverPath: coverFile?.path,
-      },
-    })
-  }
-)
+        ratings: JSON.parse(ratings || "{}"), // parse ratings JSON
+        audioUrl: `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${audioKey}`,
+        coverUrl: `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${coverKey}`,
+        createdAt: new Date().toISOString(),
+      };
 
-export default router
+      // Store metadata in DynamoDB
+      await ddb.send(
+        new PutCommand({
+          TableName: SONGS_TABLE,
+          Item: songItem,
+        })
+      );
+
+      res.status(201).json({
+        message: "Song uploaded successfully",
+        data: songItem,
+      });
+    } catch (err) {
+      console.error("❌ Error uploading song:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+);
+
+export default router;

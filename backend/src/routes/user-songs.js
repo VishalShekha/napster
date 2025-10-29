@@ -1,55 +1,48 @@
+// routes/user-songs.js
 import express from "express";
-const router = express.Router();
+import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { dyDB_client } from "../middleware/dynamo_config.js";
 
-// GET /user-songs
-router.get("/", (req, res) => {
-  res.json([
-    {
-      id: 101,
-      title: "Midnight Echoes",
-      artist: "John Doe",
-      album: "Solo Sessions",
-      plays: 1247,
-      duration: "3:42",
-      cover: "/abstract-album-cover.png",
-    },
-    {
-      id: 102,
-      title: "Digital Dreams",
-      artist: "John Doe",
-      album: "Electronic Vibes",
-      plays: 892,
-      duration: "4:15",
-      cover: "/midnight-dreams-album-cover.png",
-    },
-    {
-      id: 103,
-      title: "Acoustic Sunrise",
-      artist: "John Doe",
-      album: "Morning Sessions",
-      plays: 2156,
-      duration: "3:28",
-      cover: "/acoustic-sessions-album-cover.png",
-    },
-    {
-      id: 104,
-      title: "Bass Revolution",
-      artist: "John Doe",
-      album: "Heavy Beats",
-      plays: 3421,
-      duration: "2:58",
-      cover: "/album-cover-bass-drop.jpg",
-    },
-    {
-      id: 105,
-      title: "Jazz Fusion",
-      artist: "John Doe",
-      album: "Smooth Sounds",
-      plays: 567,
-      duration: "5:12",
-      cover: "/album-cover-jazz-nights.jpg",
-    },
-  ]);
+const router = express.Router();
+const ddb = DynamoDBDocumentClient.from(dyDB_client);
+
+const SONGS_TABLE = "Songs-Napster-DB";
+
+// GET all songs for a given user email
+router.get("/", async (req, res) => {
+  try {
+    const email = req.query.email;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    // Query DynamoDB by email (assuming email is partition key)
+    const data = await ddb.send(
+      new QueryCommand({
+        TableName: SONGS_TABLE,
+        KeyConditionExpression: "email = :email",
+        ExpressionAttributeValues: {
+          ":email": email,
+        },
+      })
+    );
+    console.log("Fetched user songs:", data);
+
+    const songs = data.Items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      album: item.album,
+      plays: item.plays || 0,
+      duration: item.duration || "00:00",
+      status: item.status || "published",
+      uploadDate: item.createdAt,
+      cover: item.coverUrl,
+      audioUrl: item.audioUrl,
+    }));
+
+    res.json(songs);
+  } catch (err) {
+    console.error("❌ Error fetching user songs:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 export default router;

@@ -12,8 +12,9 @@ import blendsRoutes from "./routes/blends.js";
 import sessionsRoutes from "./routes/sessions.js";
 import authRoutes from "./routes/auth.js";
 import searchRoutes from "./routes/search.js";
-import playlistRoutes from "./routes/playlists.js"
+import playlistRoutes from "./routes/playlists.js";
 import usersRoutes from "./routes/users.js";
+import uploadRoutes from "./routes/uploads.js";
 
 dotenv.config();
 
@@ -25,7 +26,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: "http://localhost:3000", // your frontend's URL
-    credentials: true,               // allow cookies / tokens
+    credentials: true, // allow cookies / tokens
   })
 );
 
@@ -40,22 +41,20 @@ app.post("/login", (req, res) => {
   res.json({ token: "your-token-value" });
 });
 
-
-
 app.use("/profile", profileRoutes);
 app.use("/user-songs", userSongsRoutes);
 app.use("/auth", authRoutes);
 app.use("/search", searchRoutes);
-app.use("/api/friends", friendsRoutes);        
-app.use("/api", blendsRoutes);                 
+app.use("/playlists", playlistRoutes);
+app.use("/users", usersRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/friends", friendsRoutes);
 app.use("/api/genres", genresRoutes);
 app.use("/api/top-charts", topChartsRoutes);
 app.use("/api/mood-playlists", moodPlaylistsRoutes);
 app.use("/api/sessions", sessionsRoutes);
 app.use("/api/notifications", notificationsRoutes);
-app.use("/playlists", playlistRoutes)
-app.use("/users", usersRoutes);
-
+app.use("/api", blendsRoutes);
 
 // Server running
 app.listen(port, () => {

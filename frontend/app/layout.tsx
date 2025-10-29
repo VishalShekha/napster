@@ -1,18 +1,18 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
-import { Analytics } from "@vercel/analytics/next"
-import { Suspense } from "react"
+import type React from "react";
+import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import { Analytics } from "@vercel/analytics/next";
+import { Suspense } from "react";
 
-import { LayoutWrapper } from "@/components/layout-wrapper"
-import "./globals.css"
+import { LayoutWrapper } from "@/components/layout-wrapper";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "MusicStream - Your Music, Your Way",
   description: "Stream millions of songs and discover new music",
   generator: "v0.app",
-}
+};
 
 export default function RootLayout({
   children,
@@ -26,5 +26,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  )
+  );
 }
