@@ -11,7 +11,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-screen bg-background">
       <main className="flex-1 overflow-auto pb-24">{children}</main>
-      {!hidePlayer && <MusicPlayer />}
+      
     </div>
   )
 }

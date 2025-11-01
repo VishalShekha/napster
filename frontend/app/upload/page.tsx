@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Upload, Music, ImageIcon } from "lucide-react";
 
+
 if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
   throw new Error("NEXT_PUBLIC_BACKEND_URL is not defined in your .env file");
 }
@@ -18,6 +19,7 @@ if (!process.env.NEXT_PUBLIC_BACKEND_URL) {
 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export default function UploadPage() {
+  
   const [dragActive, setDragActive] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [coverArt, setCoverArt] = useState<File | null>(null);
@@ -358,7 +360,7 @@ export default function UploadPage() {
         </div>
       </main>
 
-      <MusicPlayer />
+      
     </div>
   );
 }

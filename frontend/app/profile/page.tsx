@@ -216,7 +216,7 @@ useEffect(() => {
         </div>
       </main>
 
-      <MusicPlayer />
+      
     </div>
   );
 }

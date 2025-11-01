@@ -279,7 +279,7 @@ export default function SearchPage() {
         </div>
       </main>
 
-      <MusicPlayer />
+      
     </div>
   );
 }

@@ -35,15 +35,15 @@ router.post(
       const audioFile = req.files["audio"] ? req.files["audio"][0] : null;
       const coverFile = req.files["coverArt"] ? req.files["coverArt"][0] : null;
 
-      if (!audioFile || !coverFile) {
-        return res
-          .status(400)
-          .json({ message: "Audio and cover art files are required" });
+      // ✅ Allow upload even if cover art is missing
+      if (!audioFile) {
+        return res.status(400).json({ message: "Audio file is required" });
       }
+
 
       // Generate unique S3 keys
       const audioKey = `audio/${generateId()}-${audioFile.originalname}`;
-      const coverKey = `cover/${generateId()}-${coverFile.originalname}`;
+      
 
       // Upload audio to S3
       await s3_client.send(
@@ -56,14 +56,19 @@ router.post(
       );
 
       // Upload cover art to S3
-      await s3_client.send(
-        new PutObjectCommand({
-          Bucket: S3_BUCKET,
-          Key: coverKey,
-          Body: coverFile.buffer,
-          ContentType: coverFile.mimetype,
-        })
-      );
+      let coverUrl = null;
+        if (coverFile) {
+          const coverKey = `cover/${generateId()}-${coverFile.originalname}`;
+          await s3_client.send(
+            new PutObjectCommand({
+              Bucket: S3_BUCKET,
+              Key: coverKey,
+              Body: coverFile.buffer,
+              ContentType: coverFile.mimetype,
+            })
+          );
+          coverUrl = `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${coverKey}`;
+        }
 
       // Prepare metadata for DynamoDB
       const songItem = {
@@ -76,7 +81,7 @@ router.post(
         description,
         ratings: JSON.parse(ratings || "{}"), // parse ratings JSON
         audioUrl: `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${audioKey}`,
-        coverUrl: `https://${S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${coverKey}`,
+        coverUrl,
         createdAt: new Date().toISOString(),
       };
 

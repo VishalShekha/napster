@@ -255,7 +255,7 @@ if (loading) {
         </div>
       </main>
 
-      <MusicPlayer />
+      
     </div>
   )
 }
