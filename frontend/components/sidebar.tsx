@@ -9,6 +9,7 @@ import {
   User,
   Upload,
   Bell,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -90,6 +91,26 @@ export function Sidebar() {
     fetchPlaylists();
   };
 
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+
+      if (token) {
+        await fetch("http://localhost:5000/logout", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+
+      // ✅ Remove token on frontend
+      localStorage.removeItem("accessToken");
+
+      // ✅ Redirect to login page
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
   return (
     <div className="w-72 bg-sidebar border-r border-sidebar-border flex flex-col h-full">
       <div className="p-6 border-b border-sidebar-border">
@@ -255,6 +276,17 @@ export function Sidebar() {
           )}
         </div>
       </ScrollArea>
+
+     <div className="px-6 py-4 border-t border-sidebar-border">
+  <button
+    onClick={handleLogout}
+    className="flex items-center gap-2 text-white hover:text-gray-300"
+  >
+    <LogOut size={18} />
+    Logout
+  </button>
+</div>
+
     </div>
   );
 }

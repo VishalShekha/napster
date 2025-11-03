@@ -112,5 +112,16 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+// ========================== LOGOUT ==========================
+router.post("/logout", (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(400).json({ message: "No token provided" });
+  }
+
+  // ✅ FRONTEND will remove token — backend just confirms logout
+  return res.json({ message: "Logged out successfully" });
+});
 
 export default router;
