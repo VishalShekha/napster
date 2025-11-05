@@ -8,7 +8,7 @@ import {
   QueryCommand,
   DeleteCommand,
   UpdateCommand,
-  BatchGetCommand
+  BatchGetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { dyDB_client } from "../middleware/dynamo_config.js";
 import { v4 as uuidv4 } from "uuid";
@@ -18,6 +18,7 @@ dotenv.config();
 
 const ddb = DynamoDBDocumentClient.from(dyDB_client);
 const PLAYLISTS_TABLE = "playlists-Napster-DB";
+const SONGS_TABLE = "Songs-Napster-DB";
 
 // ========================== MIDDLEWARE: Verify JWT ==========================
 const authenticateToken = (req, res, next) => {
@@ -106,14 +107,11 @@ router.get("/:playlistId", authenticateToken, async (req, res) => {
     const { playlistId } = req.params;
     const userEmail = req.user.email;
 
-    // 1️⃣ Get playlist
+    // Fetch the playlist from DynamoDB
     const playlistResult = await ddb.send(
       new GetCommand({
         TableName: PLAYLISTS_TABLE,
-        Key: {
-          emailid: userEmail,
-          playlistId: playlistId,
-        },
+        Key: { emailid: userEmail, playlistId },
       })
     );
 
@@ -122,57 +120,59 @@ router.get("/:playlistId", authenticateToken, async (req, res) => {
     }
 
     const playlist = playlistResult.Item;
-    const songIds = playlist.songs || []; // adjust to your actual field name
+    const songIds = playlist.songIds || [];
 
-    // 2️⃣ If no songs in playlist, return it as-is
+    // If no songs, return as-is
     if (songIds.length === 0) {
       return res.json({ success: true, data: { ...playlist, songs: [] } });
     }
 
-    // 3️⃣ Fetch only required songs from Songs-Napster-DB
-    const SONGS_TABLE = "Songs-Napster-DB";
+    // Fetch all songs sequentially (or in parallel with Promise.all)
+    const songs = [];
+    for (const songId of songIds) {
+      try {
+        const songResult = await ddb.send(
+          new QueryCommand({
+            TableName: SONGS_TABLE,
+            KeyConditionExpression: "email = :email AND id = :id",
+            ExpressionAttributeValues: {
+              ":email": '"' + userEmail + '"',
+              ":id": songId,
+            },
+          })
+        );
 
-    // DynamoDB batch get (max 100 per request)
-    const requestKeys = songIds.map((id) => ({
-      email: userEmail, // partition key
-      id, // sort key
-    }));
+        if (songResult.Items) {
+          const s = songResult.Items[0];
+          console.log(s);
+          songs.push({
+            id: s.id,
+            title: s.title,
+            album: s.album ?? "Unknown Album",
+            artist: s.artist ?? "Unknown Artist",
+            genre: s.genre ?? "Unknown",
+            duration: s.duration ?? "00:00",
+            coverUrl: s.coverUrl ?? null,
+            audioUrl: s.audioUrl ?? null,
+            createdAt: s.createdAt,
+          });
+        }
+      } catch (err) {
+        console.error(`Error fetching song ${songId}:`, err);
+      }
+    }
 
-    const batchResult = await ddb.send(
-      new BatchGetCommand({
-        RequestItems: {
-          [SONGS_TABLE]: {
-            Keys: requestKeys,
-          },
-        },
-      })
-    );
-    console.log("Fetched songs for playlist:", batchResult);
-
-    const songs = batchResult.Responses?.[SONGS_TABLE] || [];
-
-    // 4️⃣ Map and format
-    const formattedSongs = songs.map((song) => ({
-      id: song.id,
-      title: song.title,
-      album: song.album || "Unknown Album",
-      duration: song.duration || "0:00",
-      coverUrl: song.coverUrl || null,
-      audioUrl: song.audioUrl || null,
-      artist: song.artist || "Unknown Artist",
-    }));
-
-    // 5️⃣ Return playlist + detailed songs
-    res.json({
+    // Return playlist + songs
+    return res.json({
       success: true,
       data: {
         ...playlist,
-        songs: formattedSongs,
+        songs,
       },
     });
   } catch (err) {
-    console.error("❌ Error fetching playlist:", err);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error fetching playlist:", err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 });
 
