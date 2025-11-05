@@ -96,7 +96,7 @@ export function Sidebar() {
       const token = localStorage.getItem("accessToken");
 
       if (token) {
-        await fetch("http://localhost:5000/logout", {
+        await fetch("http://localhost:4000/logout", {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });

@@ -15,6 +15,7 @@ import { Slider } from "@/components/ui/slider";
 
 interface MusicPlayerProps {
   song?: {
+    id?: string;
     title: string;
     artist?: string;
     cover?: string;
@@ -37,32 +38,50 @@ export function MusicPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
-  // Handle song changes
+  // ✅ Ensure listen is recorded only once per song
+  const hasRecorded = useRef(false);
+
+  // ✅ Listen recorder
+  const recordListen = async () => {
+    if (!song?.id) return;
+
+    try {
+      const res = await fetch("http://localhost:4000/api/stats/listen", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ songId: song.id }),
+      });
+
+      console.log("✅ Listen recorded for", song.title);
+    } catch (err) {
+      console.error("❌ Failed to record listen:", err);
+    }
+  };
+
+  // ✅ SONG CHANGED
   useEffect(() => {
     if (!audioRef.current || !song?.audioUrl) return;
 
     const audio = audioRef.current;
 
-    // Pause current playback
     audio.pause();
-
-    // Load new song
     audio.src = song.audioUrl;
     audio.load();
 
-    // Reset time
+    hasRecorded.current = false; // ✅ reset counter for new song
     setCurrentTime(0);
 
-    // Play if should be playing
     if (isPlaying) {
       audio.play().catch((err) => console.warn("Playback failed:", err));
     }
-  }, [song?.audioUrl]);
+  }, [song?.id]); // ✅ song.id triggers when switching songs
 
-  // Handle play/pause state changes
+  // ✅ PLAY / PAUSE CONTROL
   useEffect(() => {
     if (!audioRef.current) return;
-
     const audio = audioRef.current;
 
     if (isPlaying) {
@@ -72,7 +91,17 @@ export function MusicPlayer({
     }
   }, [isPlaying]);
 
-  // Set up audio event listeners
+  // ✅ RECORD LISTEN WHEN USER PRESSES PLAY (ONLY ONCE)
+  useEffect(() => {
+    if (!isPlaying || !song?.id) return;
+
+    if (!hasRecorded.current) {
+      recordListen();
+      hasRecorded.current = true;
+    }
+  }, [isPlaying, song?.id]);
+
+  // ✅ AUDIO LISTENERS
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -92,6 +121,7 @@ export function MusicPlayer({
     };
   }, [onPlayPause]);
 
+  // ✅ Format time
   const formatTime = (time: number) => {
     if (isNaN(time)) return "0:00";
     const minutes = Math.floor(time / 60);
@@ -99,6 +129,7 @@ export function MusicPlayer({
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
+  // ✅ Seek control
   const handleSeek = (value: number[]) => {
     if (audioRef.current) {
       audioRef.current.currentTime = value[0];
@@ -109,6 +140,7 @@ export function MusicPlayer({
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4">
       <audio ref={audioRef} />
+
       <div className="flex items-center justify-between max-w-screen-xl mx-auto">
         {/* Currently Playing */}
         <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -123,6 +155,7 @@ export function MusicPlayer({
               <div className="text-muted-foreground text-xs">No Cover</div>
             )}
           </div>
+
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
               {song?.title || "No song playing"}
@@ -131,6 +164,7 @@ export function MusicPlayer({
               {song?.artist || "—"}
             </p>
           </div>
+
           <Button
             size="sm"
             variant="ghost"
@@ -143,20 +177,14 @@ export function MusicPlayer({
         {/* Player Controls */}
         <div className="flex flex-col items-center gap-2 flex-1 max-w-md">
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
+            <Button size="sm" variant="ghost" className="text-muted-foreground">
               <Shuffle className="h-4 w-4" />
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
+
+            <Button size="sm" variant="ghost" className="text-muted-foreground">
               <SkipBack className="h-4 w-4" />
             </Button>
+
             <Button
               size="sm"
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full w-8 h-8"
@@ -168,18 +196,12 @@ export function MusicPlayer({
                 <Play className="h-4 w-4" />
               )}
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
+
+            <Button size="sm" variant="ghost" className="text-muted-foreground">
               <SkipForward className="h-4 w-4" />
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-            >
+
+            <Button size="sm" variant="ghost" className="text-muted-foreground">
               <Repeat className="h-4 w-4" />
             </Button>
           </div>
@@ -189,6 +211,7 @@ export function MusicPlayer({
             <span className="text-xs text-muted-foreground min-w-[40px]">
               {formatTime(currentTime)}
             </span>
+
             <Slider
               value={[currentTime]}
               onValueChange={handleSeek}
@@ -196,14 +219,14 @@ export function MusicPlayer({
               step={1}
               className="flex-1"
             />
+
             <span className="text-xs text-muted-foreground min-w-[40px]">
               {formatTime(duration)}
             </span>
           </div>
         </div>
 
-        {/* Empty spacer for layout */}
-        <div className="flex-1"></div>
+        <div className="flex-1" />
       </div>
     </div>
   );

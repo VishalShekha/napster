@@ -15,7 +15,6 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
 }
 
-
 /* ---- TypeScript interface ---- */
 interface Song {
   id: string;
@@ -37,7 +36,6 @@ export default function MySongsPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-
   const userEmail =
     typeof window !== "undefined" ? localStorage.getItem("email") || "" : "";
 
@@ -58,7 +56,40 @@ export default function MySongsPage() {
     }
   }
 
-  
+  // ✅ PLAY COUNT API HERE
+  async function incrementPlayCount(songId: string) {
+    try {
+      await fetch(`${API_BASE}/increment-play`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ songId }),
+      });
+    } catch (err) {
+      console.error("Error incrementing play count:", err);
+    }
+  }
+  // ✅ NEW: Store listening history in DynamoDB
+async function updateListeningHistory(songId: string) {
+  try {
+    const token = localStorage.getItem("token");
+
+    await fetch(`${API_BASE}/api/stats/listen`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ songId }),
+    });
+
+    console.log("✅ Saved to DynamoDB");
+  } catch (err) {
+    console.error("❌ Error saving listening history:", err);
+  }
+}
+
 
   useEffect(() => {
     fetchSongs();
@@ -85,56 +116,66 @@ export default function MySongsPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(75);
 
+  // ✅ UPDATED: handlePlay includes play count logic
   const handlePlay = (song: Song) => {
-    // If clicking the same song, just toggle play/pause
-    if (currentSong?.id === song.id) {
-      setIsPlaying(!isPlaying);
-    } else {
-      // New song - set it and start playing
-      setCurrentSong(song);
-      setIsPlaying(true);
-    }
+  if (currentSong?.id === song.id) {
+    setIsPlaying(!isPlaying);
+  } else {
+    // ✅ SQL play count
+    incrementPlayCount(song.id);
 
-  
-  };
+    // ✅ DynamoDB listening history
+    updateListeningHistory(song.id);
+
+    // ✅ Update UI immediately
+    setSongs((prev) =>
+      prev.map((s) =>
+        s.id === song.id ? { ...s, plays: s.plays + 1 } : s
+      )
+    );
+
+    setCurrentSong(song);
+    setIsPlaying(true);
+  }
+};
+
 
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
-const [progress, setProgress] = useState(0);
-const [duration, setDuration] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [duration, setDuration] = useState(0);
 
-useEffect(() => {
-  if (currentSong?.audioUrl) {
-    const newAudio = new Audio(currentSong.audioUrl);
-    newAudio.volume = volume / 100;
+  useEffect(() => {
+    if (currentSong?.audioUrl) {
+      const newAudio = new Audio(currentSong.audioUrl);
+      newAudio.volume = volume / 100;
 
-    newAudio.addEventListener("loadedmetadata", () =>
-      setDuration(newAudio.duration)
-    );
-    newAudio.addEventListener("timeupdate", () =>
-      setProgress(newAudio.currentTime)
-    );
-    newAudio.addEventListener("ended", () => setIsPlaying(false));
+      newAudio.addEventListener("loadedmetadata", () =>
+        setDuration(newAudio.duration)
+      );
+      newAudio.addEventListener("timeupdate", () =>
+        setProgress(newAudio.currentTime)
+      );
+      newAudio.addEventListener("ended", () => setIsPlaying(false));
 
-    setAudio(newAudio);
-    return () => {
-      newAudio.pause();
-      newAudio.src = "";
-    };
-  }
-}, [currentSong]);
+      setAudio(newAudio);
+      return () => {
+        newAudio.pause();
+        newAudio.src = "";
+      };
+    }
+  }, [currentSong]);
 
-useEffect(() => {
-  if (audio) {
-    audio.volume = volume / 100;
-  }
-}, [volume]);
+  useEffect(() => {
+    if (audio) {
+      audio.volume = volume / 100;
+    }
+  }, [volume]);
 
-useEffect(() => {
-  if (!audio) return;
-  if (isPlaying) audio.play();
-  else audio.pause();
-}, [isPlaying, audio]);
-
+  useEffect(() => {
+    if (!audio) return;
+    if (isPlaying) audio.play();
+    else audio.pause();
+  }, [isPlaying, audio]);
 
   return (
     <div className="flex h-screen bg-background">
@@ -306,112 +347,106 @@ useEffect(() => {
             </CardContent>
           </Card>
         </div>
-        
       </main>
 
-     
-    {/* --- Bottom Music Player --- */}
-    {currentSong && (
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
-        <div className="flex items-center justify-between px-6 py-3">
-          {/* --- Left Section: Song Info --- */}
-          <div className="flex items-center gap-4 w-1/3">
-            <img
-              src={currentSong.cover || "/placeholder.svg"}
-              alt={currentSong.title}
-              className="w-12 h-12 rounded-md object-cover"
-            />
-            <div>
-              <p className="font-semibold text-foreground truncate max-w-[180px]">
-                {currentSong.title}
-              </p>
-              <p className="text-sm text-muted-foreground truncate max-w-[180px]">
-                {currentSong.album}
-              </p>
+      {/* --- Bottom Music Player --- */}
+      {currentSong && (
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
+          <div className="flex items-center justify-between px-6 py-3">
+            {/* --- Left Section: Song Info --- */}
+            <div className="flex items-center gap-4 w-1/3">
+              <img
+                src={currentSong.cover || "/placeholder.svg"}
+                alt={currentSong.title}
+                className="w-12 h-12 rounded-md object-cover"
+              />
+              <div>
+                <p className="font-semibold text-foreground truncate max-w-[180px]">
+                  {currentSong.title}
+                </p>
+                <p className="text-sm text-muted-foreground truncate max-w-[180px]">
+                  {currentSong.album}
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* --- Middle Section: Controls & Progress --- */}
-          <div className="flex flex-col items-center w-1/3">
-            <div className="flex items-center gap-4 mb-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setIsPlaying(!isPlaying)}
-                className="rounded-full w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary transition"
+            {/* --- Middle Section: Controls & Progress --- */}
+            <div className="flex flex-col items-center w-1/3">
+              <div className="flex items-center gap-4 mb-1">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  className="rounded-full w-10 h-10 bg-primary/10 hover:bg-primary/20 text-primary transition"
+                >
+                  {isPlaying ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="6" y="4" width="4" height="16" />
+                      <rect x="14" y="4" width="4" height="16" />
+                    </svg>
+                  ) : (
+                    <Play className="h-5 w-5" />
+                  )}
+                </Button>
+              </div>
+
+              {/* Progress bar */}
+              <div className="flex items-center gap-2 w-full">
+                <span className="text-xs text-muted-foreground w-8 text-right">
+                  {formatTime(progress)}
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={duration}
+                  value={progress}
+                  onChange={(e) => setProgress(Number(e.target.value))}
+                  className="w-full accent-primary"
+                />
+                <span className="text-xs text-muted-foreground w-8">
+                  {formatTime(duration)}
+                </span>
+              </div>
+            </div>
+
+            {/* --- Right Section: Volume --- */}
+            <div className="flex items-center gap-3 w-1/3 justify-end">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 text-muted-foreground"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                {isPlaying ? (
-                  // Lucide Pause icon (matches Play style)
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="6" y="4" width="4" height="16" />
-                    <rect x="14" y="4" width="4" height="16" />
-                  </svg>
-                ) : (
-                  <Play className="h-5 w-5" />
-                )}
-              </Button>
-            </div>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M19.07 4.93a10 10 0 010 14.14" />
+                <path d="M15.54 8.46a5 5 0 010 7.07" />
+              </svg>
 
-            {/* Progress bar */}
-            <div className="flex items-center gap-2 w-full">
-              <span className="text-xs text-muted-foreground w-8 text-right">
-                {formatTime(progress)}
-              </span>
               <input
                 type="range"
                 min={0}
-                max={duration}
-                value={progress}
-                onChange={(e) => setProgress(Number(e.target.value))}
-                className="w-full accent-primary"
+                max={100}
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+                className="w-24 accent-primary"
               />
-              <span className="text-xs text-muted-foreground w-8">
-                {formatTime(duration)}
-              </span>
             </div>
           </div>
-
-          {/* --- Right Section: Volume --- */}
-          <div className="flex items-center gap-3 w-1/3 justify-end">
-            {/* Improved volume icon (Lucide Volume2) */}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-muted-foreground"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <path d="M19.07 4.93a10 10 0 010 14.14" />
-              <path d="M15.54 8.46a5 5 0 010 7.07" />
-            </svg>
-
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
-              className="w-24 accent-primary"
-            />
-          </div>
         </div>
-      </div>
-    )}
-
-
+      )}
     </div>
   );
 }
