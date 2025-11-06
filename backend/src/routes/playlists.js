@@ -144,7 +144,6 @@ router.get("/:playlistId", authenticateToken, async (req, res) => {
 
         if (songResult.Items) {
           const s = songResult.Items[0];
-          console.log(s);
           songs.push({
             id: s.id,
             title: s.title,

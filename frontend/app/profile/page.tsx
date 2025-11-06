@@ -22,7 +22,6 @@ export default function DashboardPage() {
     async function fetchProfile() {
       try {
         const token = localStorage.getItem("token");
-        console.log("PROFILE: using token:", token);
 
         if (!token) {
           console.error("PROFILE: No token found in localStorage");
@@ -40,13 +39,11 @@ export default function DashboardPage() {
 
         if (!res.ok) {
           console.error("PROFILE: backend returned error", res.status);
-          console.log("PROFILE response:", await res.text());
           setLoadingProfile(false);
           return;
         }
 
         const payload = await res.json();
-        console.log("PROFILE: API response:", payload);
 
         if (payload?.data) {
           const d = payload.data;

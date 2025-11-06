@@ -52,7 +52,6 @@ export function Sidebar() {
       const token = localStorage.getItem("token");
       
       if (!token) {
-        console.log("No token found, user not logged in");
         setLoading(false);
         return;
       }

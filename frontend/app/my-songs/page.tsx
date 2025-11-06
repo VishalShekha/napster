@@ -83,8 +83,6 @@ async function updateListeningHistory(songId: string) {
       },
       body: JSON.stringify({ songId }),
     });
-
-    console.log("✅ Saved to DynamoDB");
   } catch (err) {
     console.error("❌ Error saving listening history:", err);
   }

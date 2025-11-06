@@ -24,7 +24,6 @@ router.get("/", async (req, res) => {
         },
       })
     );
-    console.log("Fetched user songs:", data);
 
     const songs = data.Items.map((item) => ({
       id: item.id,

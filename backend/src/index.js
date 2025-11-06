@@ -15,7 +15,8 @@ import searchRoutes from "./routes/search.js";
 import playlistRoutes from "./routes/playlists.js";
 import usersRoutes from "./routes/users.js";
 import uploadRoutes from "./routes/uploads.js";
-import statsRoutes from "./routes/stats.js";
+import rec from "./routes/rec.js";
+
 dotenv.config();
 
 const app = express();
@@ -40,7 +41,6 @@ app.get("/devTest", (req, res) => {
 app.post("/login", (req, res) => {
   res.json({ token: "your-token-value" });
 });
-app.use("/api/stats", statsRoutes);
 
 app.use("/profile", profileRoutes);
 app.use("/user-songs", userSongsRoutes);
@@ -48,6 +48,7 @@ app.use("/auth", authRoutes);
 app.use("/search", searchRoutes);
 app.use("/playlists", playlistRoutes);
 app.use("/users", usersRoutes);
+app.use("/api/rec", rec);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/friends", friendsRoutes);
 app.use("/api/genres", genresRoutes);

@@ -190,7 +190,6 @@ if (loading) {
               className="rounded-full hover:bg-primary/20 transition-colors"
               onClick={() => {
                 // handle personal blend creation later
-                console.log("Create blend with", friend.name)
               }}
             >
               <PlusCircle className="h-5 w-5 text-primary" />

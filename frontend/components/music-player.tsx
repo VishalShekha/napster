@@ -54,8 +54,6 @@ export function MusicPlayer({
         },
         body: JSON.stringify({ songId: song.id }),
       });
-
-      console.log("✅ Listen recorded for", song.title);
     } catch (err) {
       console.error("❌ Failed to record listen:", err);
     }

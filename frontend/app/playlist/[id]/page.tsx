@@ -94,7 +94,6 @@ export default function PlaylistPage() {
       }
 
       const data = await res.json();
-      console.log("Fetched playlist:", data);
       setPlaylist(data.data || data);
     } catch (err: any) {
       setError(err.message || "Failed to load playlist");
@@ -132,7 +131,6 @@ export default function PlaylistPage() {
       }
 
       const data = await res.json();
-      console.log("Fetched user songs:", data); 
       setUserSongs(data);
     } catch (err: any) {
       alert(err.message || "Failed to load your songs");
