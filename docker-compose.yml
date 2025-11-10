@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: napster-backend
+    ports:
+      - "5000:5000"             # Expose backend API port
+    environment:
+      - NODE_ENV=production
+    dns:
+      - 8.8.8.8                 # Google DNS for AWS DynamoDB resolution
+      - 1.1.1.1                 # Cloudflare DNS fallback
+    networks:
+      - napster-network
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: napster-frontend
+    ports:
+      - "3000:3000"             # Expose frontend for browser access
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:5000
+    depends_on:
+      - backend
+    networks:
+      - napster-network
+    restart: always
+
+networks:
+  napster-network:
+    driver: bridge
