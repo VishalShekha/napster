@@ -26,7 +26,9 @@ const port = process.env.PORT || 4000;
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:3000", // your frontend's URL
+    origin: ["http://localhost:3000", 
+    "http://3.110.197.21:3000",  // ✅ your deployed frontend EC2
+      "http://3.110.189.153:3000"], 
     credentials: true, // allow cookies / tokens
   })
 );
@@ -59,6 +61,7 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api", blendsRoutes);
 
 // Server running
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`✅ Server is running on http://0.0.0.0:${port}`);
 });
+
